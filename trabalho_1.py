@@ -13,11 +13,11 @@ def extrair_textura(img_cinza, banco_filtros):
         for nome, kernel in banco_filtros:
             resposta = cv2.filter2D(img_escala, cv2.CV_64F, kernel)
             
-            # Pega o valor absoluto da resposta do filtro
+            # pega o valor absoluto da resposta do filtro
             resposta_abs = np.abs(resposta)
             
-            # Calcula a media local da textura
-            resposta_media = cv2.blur(resposta_abs, (15, 15))
+            # calcula a media local da textura
+            resposta_media = cv2.blur(resposta_abs, (7, 7))
             
             resposta_512 = cv2.resize(resposta_media, (512, 512))
             
@@ -25,23 +25,21 @@ def extrair_textura(img_cinza, banco_filtros):
             
         # reduz a imagem pela metade com Gaussiano para a próxima iteração
         img_escala = cv2.pyrDown(img_escala)
-        
-    # empilha os 24 mapas em uma unica estrutura 
+    
+    # coloca tudo junto
     mapa_textura_24d = np.dstack(vetor_caracteristicas)
     
     return mapa_textura_24d
 
 
-#banco de filtros
 def criar_banco_filtros():
     filtros = []
     
-    # Parametros base
-    ksize = 21       
+    ksize = 21      
     sigma = 3.0      
     # 0, 45, 90 e 135 graus em radianos
     theta_angles = [0, np.pi/4, np.pi/2, 3*np.pi/4] 
-    lamda = 10.0     
+    lamda = 8.0     
     gamma = 0.5      
     psi = 0          
 
@@ -51,7 +49,7 @@ def criar_banco_filtros():
         kernel_gabor /= 1.5 * kernel_gabor.sum() 
         filtros.append(('Gabor', kernel_gabor))
         
-    # 4 Filtros circulares (Laplaciano do Gaussiano)
+    # 4 filtros circulares (Laplaciano do Gaussiano)
     sigmas_circulares = [1.0, 2.0, 3.0, 4.0]
     for sig in sigmas_circulares:
         k_1d = cv2.getGaussianKernel(ksize, sig)
@@ -62,21 +60,21 @@ def criar_banco_filtros():
     return filtros
 
 
-#preparando as imagens
+# preparando as imagens
 pasta_imagens = 'dataset/'
 pasta_destino = 'dataset_processado'
 dataset_processado = []
 
 if not os.path.exists(pasta_destino):
     os.makedirs(pasta_destino)
-    print(f"Pasta '{pasta_destino}' criada com sucesso!")
+    print(f"Pasta '{pasta_destino}' criada :)")
 
 nome = 1
 
 
-#criando os filtros
+# criando os filtros
 meu_banco_de_filtros = criar_banco_filtros()
-print(f"Banco de filtros criado com sucesso! Total de filtros: {len(meu_banco_de_filtros)}")
+print(f"Banco de filtros criado! Total de filtros: {len(meu_banco_de_filtros)}")
 
 
 
@@ -110,12 +108,12 @@ for nome_arquivo in os.listdir(pasta_imagens):
             caminho_salvar = os.path.join(pasta_destino, nome_novo_arquivo)
             cv2.imwrite(caminho_salvar, img_cinza)
             
-            #extrai a textura para a imagem
+            # extrai a textura para a imagem
             mapa_textura = extrair_textura(img_cinza, meu_banco_de_filtros)
             print("Textura extraída com sucesso para esta imagem!")
             
             
-            #kmeans
+            # kmeans
             Z = mapa_textura.reshape((-1, 24))
             Z = np.float32(Z) 
             
@@ -126,12 +124,15 @@ for nome_arquivo in os.listdir(pasta_imagens):
             K = 4
             _, label, _ = cv2.kmeans(Z, K, None, criteria, 10, cv2.KMEANS_RANDOM_CENTERS)
             
-            # pinta cada grupo com uma cor. Verde, azul, vermelho e ciano
             cores = np.array([
-                [255, 0, 0], 
-                [0, 255, 0],  
-                [0, 0, 255],
-                [255, 255, 0]
+                [255, 0, 0],     
+                [0, 255, 0],    
+                [0, 0, 255],    
+                [255, 255, 0],
+                [255, 0, 255],   
+                [0, 255, 255],   
+                [0, 128, 255],   
+                [128, 0, 128]
             ], dtype=np.uint8)
             
             resultado_cores = cores[label.flatten()]
@@ -146,6 +147,6 @@ for nome_arquivo in os.listdir(pasta_imagens):
             nome += 1
             print(f"Imagem salva: {nome_novo_arquivo}")
 
-print(f"\nTodas as imagens foram processadas. Total: {len(dataset_processado)}")
+print(f"\nTodas as imagens foram processadas :) . Total: {len(dataset_processado)}")
 
 
