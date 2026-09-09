@@ -120,8 +120,7 @@ for nome_arquivo in os.listdir(pasta_imagens):
             # agrupamento 
             criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 10, 1.0)
             
-            # 4 clusters fica mais visivel, 3 seria suficiente, mas 4 clusters deixa a segmentação mais clara
-            K = 4
+            K = 3
             _, label, _ = cv2.kmeans(Z, K, None, criteria, 10, cv2.KMEANS_RANDOM_CENTERS)
             
             cores = np.array([
